@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ДНК как символ жизни</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/controls/OrbitControls.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Unbounded', sans-serif;
+            font-weight: 300;
+            background-color: #050520;
+            color: #fff;
+        }
+        
+        #canvas-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            max-width: 300px;
+            visibility: hidden;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+            font-weight: 300;
+        }
+        
+        .button {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #4ECDC4, #556270);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: 300;
+            font-family: 'Unbounded', sans-serif;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 15px rgba(78, 205, 196, 0.5);
+            cursor: pointer;
+        }
+        
+        .button:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(78, 205, 196, 0.7);
+        }
+        
+        .facts-container {
+            position: absolute;
+            top: 120px;
+            right: 20px;
+            width: 300px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(78, 205, 196, 0.2);
+            font-weight: 300;
+        }
+        
+        .title-section {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            z-index: 100;
+            padding: 0 20px;
+        }
+        
+        .main-title {
+            font-size: 2.5rem;
+            color: #4ECDC4;
+            font-weight: 300;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            color: #ffffff;
+            font-weight: 300;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Стили для главного навигационного меню */
+        .main-nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(5, 5, 32, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 200;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(78, 205, 196, 0.2);
+        }
+        
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 300;
+            color: #4ECDC4;
+            text-decoration: none;
+            letter-spacing: 1px;
+        }
+        
+        .nav-links {
+            display: flex;
+            align-items: center;
+        }
+        
+        .nav-item {
+            position: relative;
+            padding: 6px 0;
+            margin: 0 15px;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.95rem;
+            font-weight: 300;
+            transition: color 0.3s ease;
+        }
+        
+        .nav-item.active {
+            color: #4ECDC4;
+        }
+        
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: #4ECDC4;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-item:hover::after {
+            width: 100%;
+        }
+        
+        .nav-item:hover {
+            color: #4ECDC4;
+        }
+        
+        .mobile-toggle {
+            display: none;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+        }
+        
+        .mobile-toggle span {
+            display: block;
+            width: 25px;
+            height: 2px;
+            background-color: #fff;
+            margin: 5px 0;
+            transition: all 0.3s ease;
+        }
+        
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.75rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 300;
+            z-index: 50;
+        }
+        
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 60px;
+                left: 0;
+                right: 0;
+                background-color: rgba(5, 5, 32, 0.95);
+                padding: 20px 0;
+                border-bottom: 1px solid rgba(78, 205, 196, 0.2);
+            }
+            
+            .nav-links.active {
+                display: flex;
+            }
+            
+            .nav-item {
+                margin: 10px 0;
+            }
+            
+            .mobile-toggle {
+                display: block;
+            }
+            
+            .title-section {
+                top: 80px;
+            }
+            
+            .main-title {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .button {
+                bottom: 40px;
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Навигационное меню -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <a href="index.html" class="logo">DNA</a>
+            
+            <button class="mobile-toggle" id="mobile-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            
+            <div class="nav-links" id="nav-links">
+                <a href="index.html" class="nav-item active">Главная</a>
+                <a href="#" class="nav-item">Структура ДНК</a>
+                <a href="#" class="nav-item">История открытия</a>
+                <a href="#" class="nav-item">Исследования</a>
+                <a href="https://fnhyvmus.gensparkspace.com/" class="nav-item">Галерея</a>
+                <a href="#" class="nav-item">Интересные факты</a>
+            </div>
+        </div>
+    </nav>
+    
+    <div id="canvas-container">
+        <div class="title-section">
+            <!-- <h1 class="main-title">ДНК как символ жизни</h1>
+            <p class="subtitle">Интерактивное путешествие в мир генетического кода</p> -->
+        </div>
+        
+        <div class="facts-container hidden">
+            <h3 class="text-xl font-bold mb-2">Интересные факты</h3>
+            <div id="active-fact" class="text-sm"></div>
+        </div>
+        
+        <div id="tooltip" class="tooltip"></div>
+        
+        <button id="transform-btn" class="button">
+            Развернуть ДНК
+        </button>
+        
+        <div class="footer">
+            © 2025 ДНК как символ жизни | 
+        </div>
+    </div>
+
+    <script>
+        // Mobile menu toggle
+        document.getElementById('mobile-toggle').addEventListener('click', function() {
+            document.getElementById('nav-links').classList.toggle('active');
+        });
+    
+        // DNA Facts
+        const dnaFacts = [
+            "ДНК человека на 99.9% идентична у всех людей.",
+            "Если растянуть все молекулы ДНК тела — получится нить длиной до Луны и обратно 3000 раз.",
+            "ДНК содержит около 3 миллиардов пар оснований.",
+            "ДНК была впервые выделена в 1869 году Фридрихом Мишером.",
+            "Спираль ДНК вращается вправо.",
+            "Диаметр двойной спирали ДНК составляет приблизительно 2 нанометра.",
+            "У человека около 20,000-25,000 генов.",
+            "ДНК может самовосстанавливаться.",
+            "У близнецов ДНК отличается из-за мутаций.",
+            "8% ДНК человека имеет вирусное происхождение."
+        ];
+
+        // Variables
+        let scene, camera, renderer, dnaModel;
+        let particles = [];
+        let isLinear = false;
+        let hoveredParticle = null;
+        let raycaster = new THREE.Raycaster();
+        let mouse = new THREE.Vector2();
+        let factsContainer = document.querySelector('.facts-container');
+        let activeFact = document.getElementById('active-fact');
+        let tooltip = document.getElementById('tooltip');
+        
+        // Initialize Three.js scene
+        function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 30;
+            camera.position.y = 0; // Center the camera vertically
+            
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setClearColor(0x050520);
+            document.getElementById('canvas-container').appendChild(renderer.domElement);
+            
+            // Controls for camera
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.rotateSpeed = 0.5;
+            
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+            directionalLight.position.set(1, 1, 1);
+            scene.add(directionalLight);
+            
+            // Create DNA model group
+            dnaModel = new THREE.Group();
+            // Position the DNA model below the title
+            dnaModel.position.y = -5;
+            scene.add(dnaModel);
+            
+            // Create DNA structure
+            createDNA();
+            
+            // Event listeners
+            window.addEventListener('resize', onWindowResize);
+            document.addEventListener('mousemove', onMouseMove);
+            document.getElementById('transform-btn').addEventListener('click', toggleDNAShape);
+            
+            // Start animation
+            animate();
+        }
+        
+        // Create DNA structure
+        function createDNA() {
+            const numSteps = 40;
+            const radius = 10;
+            const height = 50;
+            const strandRadius = 1;
+            const nucleotideRadius = 0.6;
+            
+            // Create the strands (backbones)
+            for (let i = 0; i < 2; i++) {
+                const strandGeometry = new THREE.TubeGeometry(
+                    new THREE.CatmullRomCurve3(
+                        Array(numSteps + 1).fill().map((_, j) => {
+                            const angle = (j / numSteps) * Math.PI * 4;
+                            const x = radius * Math.cos(angle + i * Math.PI);
+                            const z = radius * Math.sin(angle + i * Math.PI);
+                            const y = (j / numSteps) * height - height / 2;
+                            return new THREE.Vector3(x, y, z);
+                        })
+                    ),
+                    128,
+                    strandRadius,
+                    8,
+                    false
+                );
+                
+                const strandMaterial = new THREE.MeshPhongMaterial({
+                    color: i === 0 ? 0x4ECDC4 : 0xFF8822, // Голубой и оранжевый цвета для цепей
+                    shininess: 100,
+                    transparent: true,
+                    opacity: 0.8
+                });
+                
+                const strand = new THREE.Mesh(strandGeometry, strandMaterial);
+                dnaModel.add(strand);
+            }
+            
+            // Create nucleotides (connecting bars)
+            for (let i = 0; i < numSteps; i++) {
+                const angle = (i / numSteps) * Math.PI * 4;
+                const y = (i / numSteps) * height - height / 2;
+                
+                const x1 = radius * Math.cos(angle);
+                const z1 = radius * Math.sin(angle);
+                
+                const x2 = radius * Math.cos(angle + Math.PI);
+                const z2 = radius * Math.sin(angle + Math.PI);
+                
+                // Create a nucleotide pair
+                createNucleotide(x1, y, z1, x2, y, z2, i);
+            }
+            
+            // Add particles for animation effect
+            addParticles();
+        }
+        
+        // Create nucleotide connections
+        function createNucleotide(x1, y, z1, x2, y2, z2, index) {
+            // Calculate the midpoint for the connection
+            const midX = (x1 + x2) / 2;
+            const midY = (y + y2) / 2;
+            const midZ = (z1 + z2) / 2;
+            
+            // Create geometry for the connection
+            const points = [];
+            points.push(new THREE.Vector3(x1, y, z1));
+            points.push(new THREE.Vector3(midX, midY, midZ));
+            points.push(new THREE.Vector3(x2, y2, z2));
+            
+            const curve = new THREE.CatmullRomCurve3(points);
+            const geometry = new THREE.TubeGeometry(curve, 8, 0.3, 8, false);
+            
+            // Alternate colors for nucleotides
+            let color;
+            switch (index % 4) {
+                case 0: color = 0x00ff00; break; // Green (A)
+                case 1: color = 0xff0000; break; // Red (T)
+                case 2: color = 0x0000ff; break; // Blue (C)
+                case 3: color = 0xffff00; break; // Yellow (G)
+            }
+            
+            const material = new THREE.MeshPhongMaterial({
+                color: color,
+                shininess: 100
+            });
+            
+            const tube = new THREE.Mesh(geometry, material);
+            
+            // Add fact to this nucleotide
+            const factIndex = index % dnaFacts.length;
+            tube.userData = { factIndex: factIndex };
+            
+            dnaModel.add(tube);
+        }
+        
+        // Add floating particles around DNA
+        function addParticles() {
+            const particleCount = 300;
+            const particleGeometry = new THREE.SphereGeometry(0.2, 8, 8);
+            
+            for (let i = 0; i < particleCount; i++) {
+                const phi = Math.random() * Math.PI * 2;
+                const theta = Math.random() * Math.PI * 2;
+                const r = 15 + Math.random() * 15;
+                
+                const particle = new THREE.Mesh(
+                    particleGeometry,
+                    new THREE.MeshBasicMaterial({
+                        color: new THREE.Color(
+                            0.5 + Math.random() * 0.5,
+                            0.5 + Math.random() * 0.5,
+                            0.5 + Math.random() * 0.5
+                        ),
+                        transparent: true,
+                        opacity: Math.random() * 0.5 + 0.1
+                    })
+                );
+                
+                particle.position.x = r * Math.sin(theta) * Math.cos(phi);
+                particle.position.y = r * Math.sin(theta) * Math.sin(phi) - 10;
+                particle.position.z = r * Math.cos(theta);
+                
+                // Store original position for animation
+                particle.userData = {
+                    originalX: particle.position.x,
+                    originalY: particle.position.y,
+                    originalZ: particle.position.z,
+                    phaseX: Math.random() * 2 * Math.PI,
+                    phaseY: Math.random() * 2 * Math.PI,
+                    phaseZ: Math.random() * 2 * Math.PI,
+                    amplitude: Math.random() * 0.5 + 0.5
+                };
+                
+                particles.push(particle);
+                scene.add(particle);
+            }
+        }
+        
+        // Handle window resize
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        // Handle mouse movement for hover effects
+        function onMouseMove(event) {
+            // Update mouse coordinates for raycasting
+            mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+            mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+            
+            // Perform raycasting
+            raycaster.setFromCamera(mouse, camera);
+            
+            // Check for intersections with DNA components
+            const intersects = raycaster.intersectObjects(dnaModel.children);
+            
+            if (intersects.length > 0) {
+                // We found an intersection
+                const intersectedObject = intersects[0].object;
+                
+                if (intersectedObject.userData && typeof intersectedObject.userData.factIndex !== 'undefined') {
+                    // Show tooltip with DNA fact
+                    const factIndex = intersectedObject.userData.factIndex;
+                    factsContainer.classList.remove('hidden');
+                    activeFact.textContent = dnaFacts[factIndex];
+                    
+                    // Highlight the intersected object
+                    if (hoveredParticle && hoveredParticle !== intersectedObject) {
+                        hoveredParticle.material.emissive.setHex(0x000000);
+                    }
+                    
+                    hoveredParticle = intersectedObject;
+                    hoveredParticle.material.emissive.setHex(0x333333);
+                    
+                    // Update tooltip position - show in random positions
+                    tooltip.style.visibility = 'visible';
+                    tooltip.style.opacity = '1';
+                    
+                    // Generate random position within the viewport
+                    const maxX = window.innerWidth - 300; // tooltip width
+                    const maxY = window.innerHeight - 100; // tooltip height
+                    const randomX = Math.random() * maxX;
+                    const randomY = Math.random() * maxY;
+                    
+                    tooltip.style.left = randomX + 'px';
+                    tooltip.style.top = randomY + 'px';
+                    tooltip.textContent = dnaFacts[factIndex];
+                }
+            } else {
+                // No intersection, hide the tooltip
+                if (hoveredParticle) {
+                    hoveredParticle.material.emissive.setHex(0x000000);
+                    hoveredParticle = null;
+                }
+                
+                tooltip.style.visibility = 'hidden';
+                tooltip.style.opacity = '0';
+                factsContainer.classList.add('hidden');
+            }
+        }
+        
+        // Toggle between spiral and linear DNA shape
+        function toggleDNAShape() {
+            isLinear = !isLinear;
+            
+            // Update button text
+            const button = document.getElementById('transform-btn');
+            button.textContent = isLinear ? 'Свернуть ДНК' : 'Развернуть ДНК';
+            
+            // Animate the transition
+            const duration = 1.5; // seconds
+            const startTime = performance.now();
+            
+            function animate() {
+                const elapsedTime = (performance.now() - startTime) / 1000;
+                const progress = Math.min(elapsedTime / duration, 1);
+                const easeProgress = easeInOutCubic(progress);
+                
+                // Update positions of all DNA components
+                dnaModel.children.forEach((child, i) => {
+                    if (child.geometry && child.geometry.type === "TubeGeometry") {
+                        // It's either a strand or nucleotide
+                        if (child.geometry.parameters.tubularSegments === 128) {
+                            // It's a strand (backbone)
+                            updateStrandGeometry(child, easeProgress, i % 2);
+                        } else {
+                            // It's a nucleotide connection
+                            updateNucleotideGeometry(child, easeProgress, i - 2);
+                        }
+                    }
+                });
+                
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                }
+            }
+            
+            animate();
+        }
+        
+        // Easing function for smooth animation
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+        
+        // Update strand geometry for transformation
+        function updateStrandGeometry(strand, progress, strandIndex) {
+            const numSteps = 40;
+            const radius = 10;
+            const height = 50;
+            
+            // Create new path for the strand
+            const points = Array(numSteps + 1).fill().map((_, j) => {
+                const linearX = strandIndex === 0 ? -5 : 5;
+                const linearY = (j / numSteps) * height - height / 2;
+                const linearZ = 0;
+                
+                const spiralAngle = (j / numSteps) * Math.PI * 4;
+                const spiralX = radius * Math.cos(spiralAngle + strandIndex * Math.PI);
+                const spiralY = (j / numSteps) * height - height / 2;
+                const spiralZ = radius * Math.sin(spiralAngle + strandIndex * Math.PI);
+                
+                // Interpolate between spiral and linear positions
+                return new THREE.Vector3(
+                    isLinear ? spiralX * (1 - progress) + linearX * progress : linearX * (1 - progress) + spiralX * progress,
+                    spiralY,
+                    isLinear ? spiralZ * (1 - progress) + linearZ * progress : linearZ * (1 - progress) + spiralZ * progress
+                );
+            });
+            
+            // Create new geometry
+            const newGeometry = new THREE.TubeGeometry(
+                new THREE.CatmullRomCurve3(points),
+                128,
+                strand.geometry.parameters.radius,
+                8,
+                false
+            );
+            
+            // Replace the old geometry
+            strand.geometry.dispose();
+            strand.geometry = newGeometry;
+        }
+        
+        // Update nucleotide geometry for transformation
+        function updateNucleotideGeometry(nucleotide, progress, index) {
+            const numSteps = 40;
+            const radius = 10;
+            const height = 50;
+            const i = index;
+            
+            // Calculate spiral positions
+            const spiralAngle = (i / numSteps) * Math.PI * 4;
+            const y = (i / numSteps) * height - height / 2;
+            
+            const spiralX1 = radius * Math.cos(spiralAngle);
+            const spiralZ1 = radius * Math.sin(spiralAngle);
+            
+            const spiralX2 = radius * Math.cos(spiralAngle + Math.PI);
+            const spiralZ2 = radius * Math.sin(spiralAngle + Math.PI);
+            
+            // Calculate linear positions
+            const linearX1 = -5;
+            const linearZ1 = 0;
+            
+            const linearX2 = 5;
+            const linearZ2 = 0;
+            
+            // Interpolate positions
+            const x1 = isLinear ? spiralX1 * (1 - progress) + linearX1 * progress : linearX1 * (1 - progress) + spiralX1 * progress;
+            const z1 = isLinear ? spiralZ1 * (1 - progress) + linearZ1 * progress : linearZ1 * (1 - progress) + spiralZ1 * progress;
+            
+            const x2 = isLinear ? spiralX2 * (1 - progress) + linearX2 * progress : linearX2 * (1 - progress) + spiralX2 * progress;
+            const z2 = isLinear ? spiralZ2 * (1 - progress) + linearZ2 * progress : linearZ2 * (1 - progress) + spiralZ2 * progress;
+            
+            // Create new points for the nucleotide connection
+            const points = [];
+            points.push(new THREE.Vector3(x1, y, z1));
+            points.push(new THREE.Vector3((x1 + x2) / 2, y, (z1 + z2) / 2));
+            points.push(new THREE.Vector3(x2, y, z2));
+            
+            // Create new geometry
+            const curve = new THREE.CatmullRomCurve3(points);
+            const newGeometry = new THREE.TubeGeometry(
+                curve,
+                8,
+                nucleotide.geometry.parameters.radius,
+                8,
+                false
+            );
+            
+            // Replace the old geometry
+            nucleotide.geometry.dispose();
+            nucleotide.geometry = newGeometry;
+        }
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Animate floating particles
+            const time = Date.now() * 0.001;
+            
+            particles.forEach((particle, i) => {
+                const ud = particle.userData;
+                
+                // Slowly move particles toward DNA
+                if (time < 10) {
+                    const t = Math.min(time / 10, 1);
+                    particle.position.x = ud.originalX * (1 - t) + (ud.originalX * 0.5) * t;
+                    particle.position.y = ud.originalY * (1 - t) + (ud.originalY * 0.5) * t;
+                    particle.position.z = ud.originalZ * (1 - t) + (ud.originalZ * 0.5) * t;
+                } else {
+                    // Gentle floating motion
+                    particle.position.x = ud.originalX * 0.5 + Math.sin(time + ud.phaseX) * ud.amplitude;
+                    particle.position.y = ud.originalY * 0.5 + Math.cos(time + ud.phaseY) * ud.amplitude;
+                    particle.position.z = ud.originalZ * 0.5 + Math.sin(time + ud.phaseZ) * ud.amplitude;
+                }
+                
+                // Fade particles in
+                if (time < 5) {
+                    particle.material.opacity = Math.min(0.8, time / 5 * (Math.random() * 0.5 + 0.3));
+                }
+            });
+            
+            // Gentle rotation for the DNA model
+            dnaModel.rotation.y += 0.002;
+            
+            // Update controls
+            controls.update();
+            
+            // Render scene
+            renderer.render(scene, camera);
+        }
+        
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
